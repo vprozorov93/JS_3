@@ -1,77 +1,59 @@
 class Good {
-    constructor(id, name, description, sizes, price, availible=true) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.sizes = sizes;
-        this.price = price;
-        this.availible = availible;
+    constructor (id, name, description, sizes, price) {
+        this.id = id
+        this.name = name
+        this.description = description
+        this.sizes = sizes
+        this.price = price
+        this.available = true
     }
 
-    setAvailable(){
+    setAvailable() {
         this.availible ? this.availible = false : this.availible = true
     }
 }
 
-class GoodList {
-    #goods = [];
-    
+class GoodsList {
+    #goods = []
+
     constructor() {
-        this.filter = /o/gi;
-        this.sortPrice = true;
-        this.sortDir = true;
-    }
-
-    get list() {
-        let availableGoods = this.#goods.filter(good => good.availible && this.filter.test(good.name))
-
-        if (this.sortPrice){
-           if (this.sortDir) {
-            availableGoods = availableGoods.sort((a, b) => {
-                if (a.price > b.price) {
-                    return 1;
-                }
-                if (a.price < b.price) {
-                    return -1;
-                }
-                return 0;
-                })
-           } else {
-            availableGoods = availableGoods.sort((a, b) => {
-                if (a.price > b.price) {
-                    return -1;
-                }
-                if (a.price < b.price) {
-                    return 1;
-                }
-                return 0;
-                })
-           }
-        }
-
-        return availableGoods
+        this.filter = /Куртка/gi
+        this.sortPrice = true
+        this.sortDir = true
     }
 
     add(good) {
-        this.#goods.push(good)
+        if(good instanceof Good){
+            this.#goods.push(good)
+        } else {
+            console.log (`${good} не является объектом Good`)
+        }
     }
 
     remove(id) {
-        for (let i=0; i<this.#goods.length; i++) {
-            if (this.#goods[i].id === id) {
-                delete this.#goods[i]
-                this.#goods = this.#goods.filter(item => item != undefined) 
-                break
+        for (let good of this.#goods) {
+            if (good.id === id) {
+                this.#goods.splice(this.#goods.indexOf(good, 0), 1)
             }
-        }        
+        }
+    }
+
+    get list() {
+        let availableGoods = this.#goods.filter(good => this.filter.test(good.name) && good.available)
+
+        if (this.sortPrice) {
+            if(this.sortDir){ availableGoods.sort((good1, good2) => good1.price - good2.price)
+            } else { availableGoods.sort((good1, good2) => good2.price - good1.price) }   
+        }
+
+        return availableGoods
     }
 }
 
 class BasketGood extends Good {
     constructor(good, amount) {
-        super(good.id, good.name, good.description, good.sizes, good.price, good.availible)
+        super(good.id, good.name, good.description, good.sizes, good.price)
         this.amount = amount
-        this.link = good
     }
 }
 
@@ -83,14 +65,19 @@ class Basket {
     get totalAmount() {
         return this.goods.reduce((previousValue, currentValue) => previousValue + currentValue.amount, 0)
     }
-    
-    get totalSum() {
-        let totalSumma = 0
-        this.goods.forEach(element => totalSumma += element.amount*element.price)
-        return totalSumma
-    }
 
-    add(good, amount){
+    get totalSum() {
+        return this.goods.reduce((previousValue, currentValue) => previousValue + (currentValue.amount*currentValue.price), 0)
+    }
+    
+    add(good, amount) {
+        // let isGoodInBasket = this.goods.filter(basketGood => basketGood.id === good.id)
+        // if (isGoodInBasket.length === 0) {
+        //     this.goods.push(new BasketGood(good, amount))
+        // } else {
+        //     isGoodInBasket[0].amount+=amount
+        // }
+
         const index = this.goods.findIndex(item => item.id === good.id)
 
         if (index != -1) {
@@ -101,13 +88,23 @@ class Basket {
     }
 
     remove(good, amount) {
-        const index = this.goods.findIndex(el => el.id === good.id)
+        // let isGoodInBasket = this.goods.filter(basketGood => basketGood.id === good.id)
+        // if (isGoodInBasket.length !== 0) {
+        //     if (isGoodInBasket[0].amount-amount > 0) {
+        //         isGoodInBasket[0].amount-=amount
+        //     } else {
+        //         this.goods.splice(this.goods.indexOf(isGoodInBasket[0], 0),1)
+        //     }
+        // } else {
+        //     console.log('Good is not found in basket')
+        // }
+
+        const index = this.goods.findIndex(item => item.id === good.id)
 
         if (index != -1) {
             const newAmount = this.goods[index].amount - amount
             if (newAmount <= 0) {
-                delete this.goods[index]
-                this.goods = this.goods.filter(item => item != undefined)
+                this.goods.splice(index,1)
             } else {
                 this.goods[index].amount = newAmount
             }
@@ -119,43 +116,21 @@ class Basket {
     }
 
     removeUnavailable() {
-        this.goods = this.goods.filter(item => item.link.availible === item.availible)
+        this.goods = this.goods.filter(good => good.available)
     }
 }
 
-const good1 = new Good(1, 'shirt', '', [11,22,33], 10)
-const good2 = new Good(2, 'boots', '', [44,45,46], 2)
-const good3 = new Good(3, 'skirt', '', [44,45,46], 3)
-const good4 = new Good(4, 'polo', '', [44,45,46], 3)
-const good5 = new Good(5, 'pants', '', [44,45,46], 3)
+const good1 = new Good(1,'Куртка', '', [38,39,40], 10000)
+const good2 = new Good(3,'Куртка2', '', [38,39,40], 12000)
+const good3 = new Good(2,'Шляпа', '', [38,39,40], 10000)
+const goodList = new GoodsList()
+goodList.add(good1)
+goodList.add(good2)
+goodList.add(good3)
 
-const goodlist = new GoodList()
-
-goodlist.add(good1)
-goodlist.add(good2)
-goodlist.add(good3)
-goodlist.add(good4)
-goodlist.add(good5)
-
-// console.log('filter1', goodlist.list)
-goodlist.filter = /k/;
-// console.log('filter2', goodlist.list)
-goodlist.remove(3)
-// console.log('List after delet good with filter 2', goodlist.list)
-
-const basket = new Basket()
+basket = new Basket()
 basket.add(good1, 1)
-basket.add(good1, 2)
-// console.log('Basket:', basket)
-basket.add(good2, 3)
-basket.remove(good2, 1)
-basket.remove(good2, 2)
-basket.remove(good2, 2)
-// console.log('Basket:', basket)
-basket.add(good4, 5)
-// console.log('Basket:', basket)
-good4.setAvailable()
-basket.removeUnavailable()
-// console.log('Basket:', basket)
-basket.add(good5, 5)
-console.log('TotalAmouns:', basket.totalAmount, 'TotalSumm:', basket.totalSum)
+basket.add(good1, 5)
+basket.add(good2, 100)
+basket.remove(good1,7)
+console.log(basket)
